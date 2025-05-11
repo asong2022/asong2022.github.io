@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>作业管理系统-专业版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #f8f9fa;
+        }
+
+        #student-grid-container {
+            padding: 20px;
+            overflow: auto;
+            max-height: 80vh;
+        }
+
+        .student-grid {
+            border-collapse: collapse;
+            min-width: 800px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .student-grid th,
+        .student-grid td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .student-grid th {
+            background: #4CAF50;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .student-grid tr:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+
+        .student-grid td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 1;
+        }
+
+        .check-mark {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* 登录界面 */
+        #login-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 320px;
+            z-index: 1000;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .login-input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .login-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        /* 用户中心 */
+        #user-center {
+            display: none;
+            padding: 20px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .user-center-header {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ff4444;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.9;
+        }
+
+        .export-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .export-btn {
+            background: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .history-item {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+
+        .history-item:hover {
+            transform: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+
+        .history-item h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .history-item p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+
+        .delete-btn {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: #ff4444;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 13px;
+            opacity: 1 !important; /* 强制显示 */
+            visibility: visible !important; /* 强制显示 */
+            transition: opacity 0.2s;
+        }
+
+
+
+        .new-record-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* 主操作界面 */
+        #main-container {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .page-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #2196F3;
+            cursor: pointer;
+        }
+
+        .page-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+
+        #balloon-container {
+            flex: 2;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 80px);
+            grid-auto-rows: 80px;
+            gap: 6px;
+            overflow: auto;
+        }
+
+        #student-list {
+            flex: 1;
+            padding: 8px;
+            background: #ff6b6b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .controls {
+            padding: 8px 0;
+            text-align: center;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 0 5px;
+            transition: opacity 0.3s;
+        }
+
+        .reset-btn { background: #4dabf7; color: white; }
+        .save-btn { background: #69db7c; color: white; }
+        .back-btn { background: #ff9800; color: white; }
+
+        .buttons-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            grid-auto-rows: 32px;
+            gap: 5px;
+            padding: 5px;
+        }
+
+        .balloon {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            animation: appear 0.5s ease-out;
+            cursor: pointer;
+        }
+
+        @keyframes appear {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .balloon-number {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .student-btn {
+            padding: 3px 6px;
+            border: none;
+            border-radius: 8px;
+            background: white;
+            color: #1864ab;
+            cursor: pointer;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: opacity 0.3s;
+        }
+
+        .student-btn.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            z-index: 2000;
+        }
+
+        
+
+        
+        .dialog input {
+            display: block;
+            width: 300px;
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .page-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .page-box {
+            width: 60px;
+            height: 60px;
+            background: #f8f9fa;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 18px;
+        }
+
+        .page-box.completed {
+            background: #C8E6C9 !important;
+            border-color: #4CAF50;
+            position: relative;
+        }
+
+        .page-box.completed::after {
+            content: "✓";
+            color: #4CAF50;
+            position: absolute;
+            right: 4px;
+            bottom: 2px;
+            font-size: 14px;
+        }
+
+        .page-checkbox-wrapper {
+            position: absolute;
+            bottom: -15px; /* 调整到方框下方 */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .page-box:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="login-container">
+        <h2 style="text-align:center; margin-bottom:20px;">教师登录</h2>
+        <form class="login-form" onsubmit="return handleLogin(event)">
+            <input type="text" class="login-input" id="username" placeholder="教师姓名" required>
+            <input type="password" class="login-input" id="password" placeholder="登录密码" required>
+            <button type="submit" class="login-btn">进入系统</button>
+        </form>
+    </div>
+
+    <div id="newRecordDialog" class="dialog">
+        <h3>新建作业记录</h3>
+        <input type="text" id="workName" placeholder="作业名称">
+        <input type="number" id="pageCount" placeholder="作业页数" min="1">
+        <div style="text-align: right; margin-top: 15px;">
+            <button onclick="cancelNewRecord()">取消</button>
+            <button style="margin-left: 10px;" onclick="confirmNewRecord()">确认</button>
+        </div>
+    </div>
+
+    <!-- 用户中心 -->
+    <div id="user-center" class="interface-layer">
+        <div class="user-center-header">
+            <h2 style="text-align:center;">用户中心</h2>
+            <button class="logout-btn" onclick="handleLogout()">登出</button>
+        </div>
+        <div class="export-controls">
+            <button class="new-record-btn" onclick="startNewRecord()">➕ 新建记录</button>
+        </div>
+        <div class="history-list" id="history-list"></div>
+    </div>
+
+    <div id="page-select" class="interface-layer" style="display: none;">
+        <div class="controls">
+            <button class="action-btn back-btn" onclick="returnToUserCenter()">返回</button>
+            <button class="action-btn export-btn" onclick="exportSelectedPages()">导出选中页</button>
+            <button class="action-btn student-view-btn" onclick="showStudentView()">学生视角</button>
+            <h2 id="currentWorkTitle"></h2>
+        </div>
+        <div class="page-container" id="pageContainer"></div>
+    </div>
+
+    <div id="student-view" class="interface-layer" style="display: none;">
+        <div class="controls">
+            <button class="action-btn back-btn" onclick="returnToPageSelect()">返回</button>
+            <button class="action-btn export-btn" onclick="exportStudentView()">导出表格</button>
+        </div>
+        <div id="student-grid-container"></div>
+    </div>
+
+    <!-- 主操作界面 -->
+    <div id="main-container" class="interface-layer">
+        <div id="balloon-container"></div>
+        <div id="student-list">
+            <div class="controls">
+                <button class="action-btn back-btn" onclick="returnToUserCenter()">返回</button>
+                <button class="action-btn reset-btn" onclick="resetAll()">复位</button>
+                <button class="action-btn save-btn" onclick="saveData()">保存</button>
+            </div>
+            <div class="buttons-container">
+            <button class="student-btn" data-name="鲍宸辉">鲍宸辉</button>
+            <button class="student-btn" data-name="陈安婷">陈安婷</button>
+            <button class="student-btn" data-name="陈宸">陈宸</button>
+            <button class="student-btn" data-name="陈晨钰">陈晨钰</button>
+            <button class="student-btn" data-name="陈俊屹">陈俊屹</button>
+            <button class="student-btn" data-name="陈涛">陈涛</button>
+            <button class="student-btn" data-name="陈雨涵">陈雨涵</button>
+            <button class="student-btn" data-name="陈禹辰">陈禹辰</button>
+            <button class="student-btn" data-name="陈子潇">陈子潇</button>
+            <button class="student-btn" data-name="陈梓豪">陈梓豪</button>
+            <button class="student-btn" data-name="丁智城">丁智城</button>
+            <button class="student-btn" data-name="杜仁江">杜仁江</button>
+            <button class="student-btn" data-name="范锦怡">范锦怡</button>
+            <button class="student-btn" data-name="蒋贝贝">蒋贝贝</button>
+            <button class="student-btn" data-name="蒋金城">蒋金城</button>
+            <button class="student-btn" data-name="李俊豪">李俊豪</button>
+            <button class="student-btn" data-name="刘梓昊">刘梓昊</button>
+            <button class="student-btn" data-name="马华勇">马华勇</button>
+            <button class="student-btn" data-name="裴健豪">裴健豪</button>
+            <button class="student-btn" data-name="裴俊涛">裴俊涛</button>
+            <button class="student-btn" data-name="裴逸辰">裴逸辰</button>
+            <button class="student-btn" data-name="邱雨檬">邱雨檬</button>
+            <button class="student-btn" data-name="邱语程">邱语程</button>
+            <button class="student-btn" data-name="裘奕婧">裘奕婧</button>
+            <button class="student-btn" data-name="裘滢颖">裘滢颖</button>
+            <button class="student-btn" data-name="裘羽甜">裘羽甜</button>
+            <button class="student-btn" data-name="石荣誉">石荣誉</button>
+            <button class="student-btn" data-name="王皓民">王皓民</button>
+            <button class="student-btn" data-name="王睿婷">王睿婷</button>
+            <button class="student-btn" data-name="王耀辉">王耀辉</button>
+            <button class="student-btn" data-name="王梓彤">王梓彤</button>
+            <button class="student-btn" data-name="奚曾浩">奚曾浩</button>
+            <button class="student-btn" data-name="奚新普">奚新普</button>
+            <button class="student-btn" data-name="谢宛蓉">谢宛蓉</button>
+            <button class="student-btn" data-name="徐佳雯">徐佳雯</button>
+            <button class="student-btn" data-name="徐健龙">徐健龙</button>
+            <button class="student-btn" data-name="徐振轩">徐振轩</button>
+            <button class="student-btn" data-name="杨子龙">杨子龙</button>
+            <button class="student-btn" data-name="叶语涵">叶语涵</button>
+            <button class="student-btn" data-name="张芯渝">张芯渝</button>
+            <button class="student-btn" data-name="郑玉壕">郑玉壕</button>
+            <button class="student-btn" data-name="朱雅楠">朱雅楠</button>
+    
+            </div>
+        </div>
+    </div>
+
+<script>
+let currentUser = null;
+let clickOrder = [];
+let currentWork = null;
+let currentPageIndex = -1;
+let currentWorkTimestamp = null;
+let works = {}; // 数据结构：{ timestamp: { name, pages, records } }
+const colors = ['#4dabf7', '#ff6b6b', '#69db7c'];
+
+const TOTAL_STUDENTS = document.querySelectorAll('.student-btn').length;
+
+const initializeWorks = () => {
+    works = JSON.parse(localStorage.getItem(currentUser) || '{}');
+};
+
+// 登录处理
+const handleLogin = (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (username && password) {
+        if (!localStorage.getItem(username)) {
+            localStorage.setItem(username, JSON.stringify({}));
+        }
+        
+        currentUser = username;
+        initializeWorks();  // 初始化works
+        localStorage.setItem('currentUser', username);
+        
+        document.getElementById('login-container').style.display = 'none';
+        showUserCenter();
+    }
+};
+
+const returnToPageSelect = () => {
+    document.getElementById('student-view').style.display = 'none';
+    document.getElementById('page-select').style.display = 'block';
+}
+
+const exportStudentView = () => {
+    const students = Array.from(document.querySelectorAll('.student-btn'))
+        .map(btn => btn.dataset.name)
+        .sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+    
+    const headers = ['学生姓名', ...Array.from({length: currentWork.pages}, (_,i) => `第${i+1}页`)];
+    const rows = students.map(student => {
+        const pageStatus = Array(currentWork.pages).fill().map((_,i) => {
+            return currentWork.records[i]?.some(r => r.name === student) ? '✓' : '';
+        });
+        return [student, ...pageStatus];
+    });
+    
+    const csvContent = "\uFEFF" + 
+        headers.join(",") + "\n" +
+        rows.map(row => 
+            row.map(cell => 
+                cell.includes(',') ? `"${cell}"` : cell
+            ).join(",")
+        ).join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${currentWork.name}_学生视角.csv`;
+    link.click();
+}
+
+const showStudentView = () => {
+    document.getElementById('page-select').style.display = 'none';
+    document.getElementById('student-view').style.display = 'block';
+    
+    const container = document.getElementById('student-grid-container');
+    container.innerHTML = '';
+    
+    // 获取所有学生
+    const students = Array.from(document.querySelectorAll('.student-btn'))
+        .map(btn => btn.dataset.name)
+        .sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'));
+    
+    // 创建表格
+    const table = document.createElement('table');
+    table.className = 'student-grid';
+    
+    // 创建表头（页码）
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    headerRow.innerHTML = '<th>学生姓名</th>';
+    
+    for(let i=0; i<currentWork.pages; i++) {
+        const th = document.createElement('th');
+        th.textContent = `第${i+1}页`;
+        headerRow.appendChild(th);
+    }
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    
+    // 创建表格主体
+    const tbody = document.createElement('tbody');
+    students.forEach(student => {
+        const row = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        nameCell.textContent = student;
+        row.appendChild(nameCell);
+        
+        for(let i=0; i<currentWork.pages; i++) {
+            const td = document.createElement('td');
+            const hasRecord = currentWork.records[i]?.some(r => r.name === student);
+            if(hasRecord) {
+                td.innerHTML = '<span class="check-mark">✓</span>';
+            }
+            row.appendChild(td);
+        }
+        tbody.appendChild(row);
+    });
+    
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+// 登出处理
+const handleLogout = () => {
+    if(confirm('确定要退出登录吗？')) {
+        localStorage.removeItem('currentUser');
+        currentUser = null;
+        clickOrder = [];
+        currentEditKey = null;
+        
+        document.getElementById('user-center').style.display = 'none';
+        document.getElementById('main-container').style.display = 'none';
+        document.getElementById('login-container').style.display = 'block';
+        
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('balloon-container').innerHTML = '';
+        document.querySelectorAll('.student-btn').forEach(btn => {
+            btn.classList.remove('hidden');
+        });
+    }
+}
+
+// 用户中心功能
+const showUserCenter = () => {
+    // 隐藏所有界面层
+    document.querySelectorAll('.interface-layer').forEach(layer => {
+        layer.style.display = 'none';
+    });
+    
+    // 显示用户中心
+    document.getElementById('user-center').style.display = 'block';
+    loadHistoryList();
+}
+
+const loadHistoryList = () => {
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '';
+    
+    const userData = JSON.parse(localStorage.getItem(currentUser) || '{}');
+    const records = Object.entries(userData).sort((a, b) => b[0].localeCompare(a[0]));
+    
+    initializeWorks();
+    
+    Object.entries(works)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .forEach(([timestampKey, record]) => {
+        const timestamp = record.timestamp && !isNaN(record.timestamp) ? 
+            parseInt(record.timestamp) : 
+            Date.now();
+        const date = new Date(record.timestamp);
+        const isValidDate = !isNaN(date.getTime());
+        const title = `${date.getFullYear()}年
+                     ${(date.getMonth()+1).toString().padStart(2, '0')}月
+                     ${date.getDate().toString().padStart(2, '0')}日
+                     ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+            <button class="delete-btn" onclick="deleteRecord('${timestampKey}')">删除记录</button>
+            <h3>${record.name}</h3>
+            <p>总页数：${record.pages}页</p>    
+        `;
+        
+        item.addEventListener('click', (e) => {
+            if(e.target.tagName !== 'BUTTON') {
+                currentWork = userData[timestampKey];
+                showPageSelect(currentWork);
+            }
+        });
+        historyList.appendChild(item);
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('.login-form').addEventListener('submit', handleLogin);
+    
+    // 初始化用户状态
+    const savedUser = localStorage.getItem('currentUser');
+    if(savedUser) {
+        currentUser = savedUser;
+        initializeWorks();
+        document.getElementById('login-container').style.display = 'none';
+        showUserCenter();
+    }
+});
+
+const showPageSelect = (work) => {
+    const freshData = JSON.parse(localStorage.getItem(currentUser))[work.timestamp];
+    currentWork = freshData || work;
+    
+    document.getElementById('currentWorkTitle').textContent = currentWork.name;
+    
+    const container = document.getElementById('pageContainer');
+    container.innerHTML = '';
+    
+    for(let i=0; i<currentWork.pages; i++) {
+        const pageItem = document.createElement('div');
+        pageItem.className = 'page-item';
+        
+        const isCompleted = checkPageCompletion(work, i);
+        pageItem.innerHTML = `
+            <div class="page-box ${isCompleted ? 'completed' : ''}">${i+1}</div>
+            <div class="page-checkbox-wrapper">
+                <input type="checkbox" class="page-checkbox" data-page="${i}">
+            </div>
+        `;
+        
+        pageItem.querySelector('.page-box').addEventListener('click', () => startPageRecord(i));
+        container.appendChild(pageItem);
+    }
+    
+    document.querySelectorAll('.interface-layer').forEach(layer => {
+        layer.style.display = 'none';
+    });
+    document.getElementById('page-select').style.display = 'block';
+};
+
+
+const checkPageCompletion = (work, pageIndex) => {
+    const pageRecords = work.records[pageIndex] || [];
+    
+    // 获取实际记录的学生数量
+    const recordedStudents = new Set(pageRecords.map(r => r.name)).size;
+    
+    // 双重验证：记录数等于总人数且所有学生都被记录
+    return recordedStudents >= TOTAL_STUDENTS;
+}
+
+const startPageRecord = (pageIndex) => {
+    currentPageIndex = pageIndex; // 记录当前页码
+    clickOrder = currentWork.records[pageIndex] || [];
+    document.getElementById('page-select').style.display = 'none';
+    document.getElementById('main-container').style.display = 'flex';
+    updateBalloonDisplay();
+    updateStudentButtons();
+}
+
+const exportSelectedPages = () => {
+    const selected = Array.from(document.querySelectorAll('.page-checkbox:checked'))
+        .map(c => parseInt(c.dataset.page));
+    
+    if(selected.length === 0) return alert("请至少选择一页");
+    
+    const csvContent = generateCSV(currentWork, selected);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${currentWork.name}_导出页数据.csv`;
+    link.click();
+}
+
+const generateCSV = (work, pages) => {
+    const students = Array.from(document.querySelectorAll('.student-btn'))
+        .map(btn => btn.dataset.name);
+    
+    const headers = ["学生姓名", ...pages.map(p => `第${p+1}页`)];
+    const matrix = students.map(student => {
+        const row = [student];
+        pages.forEach(p => {
+            const record = work.records[p].find(r => r.name === student);
+            row.push(record ? record.order : "");
+        });
+        return row;
+    });
+
+    return "\uFEFF" + headers.join(",") + "\n" +
+        matrix.map(row => row.map(c => 
+            typeof c === "string" && c.includes(",") ? `"${c}"` : c
+        ).join(",")).join("\n");
+}
+
+const exportSelected = () => {
+    const checkboxes = document.querySelectorAll('.history-checkbox:checked');
+    if(checkboxes.length === 0) return alert('请先选择要导出的记录');
+
+    // 获取所有学生名单
+    const allStudents = Array.from(document.querySelectorAll('.student-btn'))
+        .map(btn => btn.dataset.name);
+
+    // 获取选中记录（按时间倒序排列）
+    const userData = JSON.parse(localStorage.getItem(currentUser) || '{}');
+    const selectedRecords = Array.from(checkboxes)
+        .map(checkbox => {
+            const record = userData[checkbox.value];
+            const dataMap = {};
+            record.order.forEach(item => {
+                dataMap[item.name] = item.order;
+            });
+            return {
+                timestamp: new Date(record.timestamp),
+                data: dataMap
+            };
+        })
+        // 关键修复1：按时间升序排列
+        .sort((a, b) => a.timestamp - b.timestamp); 
+
+    // 生成时间标签（关键修复2：移除换行符）
+    const getTimeLabel = (timestamp) => {
+        return `${timestamp.getMonth()+1}/${timestamp.getDate()} ` +
+               `${timestamp.getHours().toString().padStart(2,'0')}:` +
+               `${timestamp.getMinutes().toString().padStart(2,'0')}`;
+    };
+
+    // 构建表头（关键修复3：正确索引）
+    const headers = ['姓名', ...selectedRecords.map((record, index) => {
+        return `记录${index+1} (${getTimeLabel(record.timestamp)})`;
+    })];
+
+    // 构建数据矩阵
+    const matrix = allStudents.map(student => {
+        const row = { 姓名: student };
+        selectedRecords.forEach((record, index) => {
+            const headerName = headers[index + 1];
+            row[headerName] = record.data[student] || '';
+        });
+        return row;
+    });
+
+    // 生成CSV内容
+    const csvContent = "\uFEFF" + 
+        headers.join(",") + "\n" +
+        matrix.map(row => 
+            headers.map(header => {
+                const value = row[header] ?? '';
+                return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+            }).join(",")
+        ).join("\n");
+
+    // 创建下载链接
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `作业记录_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`;
+    link.click();
+}
+
+// 删除记录功能
+const deleteRecord = (encodedTimestamp) => {
+    if(!confirm('确定要永久删除这条记录吗？')) return;
+    
+    try {
+        // 双重解码处理遗留数据
+        const safeTimestamp = decodeURIComponent(decodeURIComponent(encodedTimestamp));
+        
+        const userData = JSON.parse(localStorage.getItem(currentUser) || '{}');
+        
+        // 兼容处理旧数据格式
+        const targetKey = Object.keys(userData).find(key => 
+            key === safeTimestamp || 
+            decodeURIComponent(key) === safeTimestamp
+        );
+        
+        if(targetKey) {
+            delete userData[targetKey];
+            localStorage.setItem(currentUser, JSON.stringify(userData));
+            
+            // 清除关联状态
+            if(currentWorkTimestamp === targetKey) {
+                currentWork = null;
+                currentWorkTimestamp = null;
+            }
+            
+            // 强制重新加载
+            works = {};
+            loadHistoryList();
+        } else {
+            alert('未找到对应记录！');
+        }
+    } catch (error) {
+        console.error('删除错误:', error);
+        alert('删除失败，请检查控制台');
+    }
+}
+
+// 记录操作
+const startNewRecord = () => {
+    document.getElementById('newRecordDialog').style.display = 'block';
+}
+
+const cancelNewRecord = () => {
+    document.getElementById('newRecordDialog').style.display = 'none';
+}
+
+const confirmNewRecord = () => {
+    const workName = document.getElementById('workName').value.trim();
+    const pageCount = parseInt(document.getElementById('pageCount').value);
+    
+    if(!workName || !pageCount || pageCount < 1) {
+        alert('请输入有效的作业名称和页数');
+        return;
+    }
+    
+    // 生成规范时间戳
+    const timestamp = Date.now().toString();
+    
+    // 修复数据结构
+    works[timestamp] = {
+        name: workName,
+        pages: pageCount,
+        records: Array(pageCount).fill().map(() => []),  // 修复记录结构
+        timestamp: timestamp
+    };
+    
+    // 保存数据
+    localStorage.setItem(currentUser, JSON.stringify(works));
+    loadHistoryList();
+    cancelNewRecord();
+}
+
+
+
+// 数据保存
+const saveData = () => {
+    if(!currentUser || !currentWork || currentPageIndex === -1) return;
+    
+    // 深度拷贝保存数据
+    currentWork.records[currentPageIndex] = JSON.parse(JSON.stringify(clickOrder));
+    
+    // 更新存储
+    works[currentWork.timestamp] = currentWork;
+    localStorage.setItem(currentUser, JSON.stringify(works));
+    
+    // 更新界面状态
+    document.getElementById('main-container').style.display = 'none';
+    showPageSelect(currentWork);
+    
+    // 新增：强制刷新数据
+    initializeWorks();
+    alert('保存成功！');
+}
+
+// 界面操作
+const updateBalloonDisplay = () => {
+    const container = document.getElementById('balloon-container');
+    container.innerHTML = '';
+    
+    clickOrder.forEach((item, index) => {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        balloon.style.background = `linear-gradient(135deg, ${colors[index%3]} 0%, ${colors[(index+1)%3]} 100%)`;
+        balloon.innerHTML = `
+            <div class="balloon-number">${index + 1}</div>
+            <div>${item.name}</div>
+        `;
+        
+        balloon.addEventListener('click', () => {
+            clickOrder = clickOrder.filter(i => i.name !== item.name);
+            updateBalloonDisplay();
+            document.querySelector(`[data-name="${item.name}"]`).classList.remove('hidden');
+        });
+        
+        container.appendChild(balloon);
+    });
+}
+
+const updateStudentButtons = () => {
+    document.querySelectorAll('.student-btn').forEach(btn => {
+        btn.classList.toggle('hidden', clickOrder.some(i => i.name === btn.dataset.name));
+    });
+}
+
+// 事件监听
+document.getElementById('student-list').addEventListener('click', function(e) {
+    if(e.target.classList.contains('student-btn')) {
+        const studentName = e.target.dataset.name;
+        e.target.classList.add('hidden');
+        clickOrder.push({
+            name: studentName,
+            order: clickOrder.length + 1
+        });
+        updateBalloonDisplay();
+    }
+});
+
+// 工具函数
+const returnToUserCenter = () => {
+    const currentPage = document.getElementById('page-select').style.display === 'block' ? 2 : 
+                       document.getElementById('main-container').style.display === 'flex' ? 3 : 1;
+
+    switch(currentPage) {
+        case 2:
+            // 新增：保存当前工作状态
+            if(currentWork) {
+                works[currentWork.timestamp] = currentWork;
+                localStorage.setItem(currentUser, JSON.stringify(works));
+            }
+            document.getElementById('page-select').style.display = 'none';
+            showUserCenter();
+            break;
+        case 3:
+            if(clickOrder.length > 0) {
+                if(!confirm('当前记录未保存，确定要返回吗？')) return;
+            }
+            document.getElementById('main-container').style.display = 'none';
+            showPageSelect(currentWork);
+            break;
+        default:
+            showUserCenter();
+    }
+}
+
+const resetAll = () => {
+    if(confirm('确定要重置当前记录吗？')) {
+        clickOrder = [];
+        updateBalloonDisplay();
+        document.querySelectorAll('.student-btn').forEach(btn => {
+            btn.classList.remove('hidden');
+        });
+    }
+}
+
+// 初始化
+window.onload = () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if(savedUser) {
+        currentUser = savedUser;
+        document.getElementById('login-container').style.display = 'none';
+        showUserCenter();
+    }
+}
+</script>
+</body>
+</html>
